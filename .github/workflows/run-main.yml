@@ -19,6 +19,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: List directory structure
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Directory contents:"
+          ls -la
+          echo "Checking for discordnewsfeednotifier folder:"
+          ls -la discordnewsfeednotifier/ || echo "Folder not found"
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
