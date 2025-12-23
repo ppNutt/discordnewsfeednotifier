@@ -33,8 +33,8 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK }}
           FEED_URL: ${{ secrets.FEED_URL }}
-        working-directory: discordnewsfeednotifier
         run: |
+          cd discordnewsfeednotifier
           python main.py
 
       - name: Commit and push last_id.json if changed
