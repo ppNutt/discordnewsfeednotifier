@@ -9,6 +9,9 @@ concurrency:
   group: run-main
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   run-main:
     runs-on: ubuntu-latest
