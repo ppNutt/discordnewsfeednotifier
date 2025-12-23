@@ -1,5 +1,5 @@
 services:
-  - type: web
+  - type: worker
     name: discord-feed-bot
     runtime: python
     plan: free
