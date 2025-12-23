@@ -251,31 +251,14 @@ def initialize_client():
     return None
 
 
-def main():
-    """Main function - checks feed once and exits (suitable for scheduled runs)."""
-    print("🚀 Starting Feed Monitor Bot...")
-    print(f"📍 Monitoring feed: {FEED_URL}")
-    print("-" * 50)
-
-    if not FEED_URL:
-        print("❌ FEED_URL not configured. Please set FEED_URL in your .env file and restart.")
-        return
-
-    last_id = load_last_tweet_id()
-    if last_id:
-        print(f"📝 Last seen tweet ID: {last_id}")
-    else:
-        print("📝 No previous tweet ID found. Starting fresh.")
-
-    print("-" * 50)
-    print("🔍 Checking for new entries...\n")
-
+def check_feed_once(last_id):
+    """Check the feed once and return the latest entry ID if processed."""
     try:
         # Fetch the latest feed entry (single check)
         result = fetch_latest_feed_entry(FEED_URL)
         if result is None:
             print("⚠️  No entries found or error fetching feed")
-            return
+            return last_id
 
         entry_id = result.get("id")
 
@@ -289,15 +272,56 @@ def main():
                 # Save the entry ID
                 save_last_tweet_id(entry_id)
                 print(f"💾 Saved entry ID: {entry_id}\n")
+                return entry_id
             else:
                 print("⚠️  Discord message failed\n")
+                return last_id
         else:
             print(f"⏸️  No new entries. Last ID: {last_id}")
-
-        print("✅ Check complete")
+            return last_id
 
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
+        return last_id
+
+
+def main():
+    """Main function - supports both single check and continuous mode."""
+    # Check if running in continuous mode (for deployed services)
+    continuous_mode = os.getenv("CONTINUOUS_MODE", "false").lower() == "true"
+    
+    print("🚀 Starting Feed Monitor Bot...")
+    print(f"📍 Monitoring feed: {FEED_URL}")
+    print(f"🔄 Mode: {'Continuous' if continuous_mode else 'Single check'}")
+    if continuous_mode:
+        print(f"⏱️  Check interval: {CHECK_INTERVAL} seconds")
+    print("-" * 50)
+
+    if not FEED_URL:
+        print("❌ FEED_URL not configured. Please set FEED_URL in your .env file and restart.")
+        return
+
+    last_id = load_last_tweet_id()
+    if last_id:
+        print(f"📝 Last seen tweet ID: {last_id}")
+    else:
+        print("📝 No previous tweet ID found. Starting fresh.")
+
+    print("-" * 50)
+
+    if continuous_mode:
+        # Continuous mode - keep checking in a loop
+        print("🔄 Running in continuous mode. Press Ctrl+C to stop.\n")
+        while True:
+            print(f"🔍 Checking for new entries... [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]")
+            last_id = check_feed_once(last_id)
+            print(f"⏳ Waiting {CHECK_INTERVAL} seconds before next check...\n")
+            time.sleep(CHECK_INTERVAL)
+    else:
+        # Single check mode (for GitHub Actions)
+        print("🔍 Checking for new entries...\n")
+        check_feed_once(last_id)
+        print("✅ Check complete")
 
 
 if __name__ == "__main__":

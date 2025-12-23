@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: discord-feed-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: DISCORD_WEBHOOK_URL
+        sync: false
+      - key: FEED_URL
+        sync: false
+      - key: CONTINUOUS_MODE
+        value: "true"
+      - key: CHECK_INTERVAL
+        value: "300"  # 5 minutes in seconds
