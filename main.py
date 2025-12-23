@@ -252,10 +252,9 @@ def initialize_client():
 
 
 def main():
-    """Main monitoring loop."""
+    """Main function - checks feed once and exits (suitable for scheduled runs)."""
     print("🚀 Starting Feed Monitor Bot...")
     print(f"📍 Monitoring feed: {FEED_URL}")
-    print(f"⏱️  Check interval: {CHECK_INTERVAL} seconds")
     print("-" * 50)
 
     if not FEED_URL:
@@ -269,39 +268,34 @@ def main():
         print("📝 No previous tweet ID found. Starting fresh.")
 
     print("-" * 50)
-    print("🔄 Starting monitoring loop...\n")
+    print("🔍 Checking for new entries...\n")
 
     try:
-        while True:
-            # Fetch the latest feed entry
-            result = fetch_latest_feed_entry(FEED_URL)
-            if result is None:
-                time.sleep(CHECK_INTERVAL)
-                continue
+        # Fetch the latest feed entry (single check)
+        result = fetch_latest_feed_entry(FEED_URL)
+        if result is None:
+            print("⚠️  No entries found or error fetching feed")
+            return
 
-            entry_id = result.get("id")
+        entry_id = result.get("id")
 
-            # Check if it's a new entry
-            if last_id is None or entry_id != last_id:
-                print(f"🆕 New feed entry detected! (ID: {entry_id})")
+        # Check if it's a new entry
+        if last_id is None or entry_id != last_id:
+            print(f"🆕 New feed entry detected! (ID: {entry_id})")
 
-                # Format and send to Discord
-                message = format_discord_message(result)
-                if send_to_discord(message):
-                    # Save the entry ID
-                    save_last_tweet_id(entry_id)
-                    last_id = entry_id
-                    print(f"💾 Saved entry ID: {last_id}\n")
-                else:
-                    print("⚠️  Discord message failed, retrying next cycle\n")
+            # Format and send to Discord
+            message = format_discord_message(result)
+            if send_to_discord(message):
+                # Save the entry ID
+                save_last_tweet_id(entry_id)
+                print(f"💾 Saved entry ID: {entry_id}\n")
             else:
-                print(f"⏸️  No new entries. Last ID: {last_id}")
+                print("⚠️  Discord message failed\n")
+        else:
+            print(f"⏸️  No new entries. Last ID: {last_id}")
 
-            # Wait before checking again
-            time.sleep(CHECK_INTERVAL)
+        print("✅ Check complete")
 
-    except KeyboardInterrupt:
-        print("\n⛔ Monitor stopped by user")
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
 
